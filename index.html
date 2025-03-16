@@ -272,6 +272,13 @@
         .performance-content.active {
             display: block;
         }
+        
+        .note {
+            padding: 10px;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -293,6 +300,10 @@
             <!-- Riepilogo -->
             <div class="section">
                 <h2>Riepilogo Portafoglio</h2>
+                <div class="note">
+                    L'aggiornamento automatico dei prezzi avviene tramite un proxy pubblico (corsproxy.io) con limiti d'uso. 
+                    Se l'aggiornamento fallisce, riprova più tardi o usa l'aggiornamento manuale.
+                </div>
                 <button id="updateAllPrices" style="margin-bottom: 10px;">Aggiorna Tutti i Prezzi in Tempo Reale</button>
                 <div class="summary">
                     <div class="summary-item">
@@ -548,12 +559,13 @@
                 
                 <div class="guide">
                     <h3>Come Aggiornare i Prezzi degli ETF</h3>
-                    <p>Questa versione supporta l'aggiornamento automatico dei prezzi tramite Yahoo Finance:</p>
+                    <p>Questa versione supporta l'aggiornamento automatico dei prezzi tramite un proxy CORS pubblico:</p>
                     
                     <div class="steps">
-                        <div class="step">1. Clicca sul pulsante <strong>"Prezzo Real-time"</strong> accanto all'ETF per ottenere il prezzo attuale da Yahoo Finance</div>
-                        <div class="step">2. Clicca su <strong>"Aggiorna Tutti i Prezzi in Tempo Reale"</strong> nella dashboard per aggiornare tutti gli ETF in una volta</div>
-                        <div class="step">3. In alternativa, puoi ancora inserire manualmente il prezzo utilizzando il campo e il pulsante "Aggiorna"</div>
+                        <div class="step">1. Clicca sul pulsante <strong>"Prezzo Real-time"</strong> accanto all'ETF per ottenere il prezzo attuale</div>
+                        <div class="step">2. Clicca su <strong>"Aggiorna Tutti i Prezzi in Tempo Reale"</strong> nella dashboard per aggiornare tutti gli ETF</div>
+                        <div class="step">3. In alternativa, puoi ancora cliccare su "Yahoo" per vedere il prezzo su Yahoo Finance e poi inserirlo manualmente</div>
+                        <div class="step">4. Nota che il proxy pubblico ha limiti di utilizzo e potrebbe non funzionare sempre, in questo caso usa il metodo manuale</div>
                     </div>
                 </div>
                 
@@ -712,7 +724,7 @@
             return { totalValue, totalCost, gainLoss, totalReturn };
         }
         
-        // Aggiorna il prezzo di un ETF da Yahoo Finance (versione GitHub Pages)
+        // Aggiorna il prezzo di un ETF da Yahoo Finance tramite proxy CORS
         async function updateRealPrice(etfId) {
             const etf = etfs.find(e => e.id === etfId);
             if (!etf) {
@@ -723,10 +735,11 @@
             try {
                 showStatus(`Recupero prezzo per ${etf.ticker}...`);
                 
-                // Usiamo l'API di Yahoo Finance direttamente
+                // Usiamo un proxy CORS per aggirare le restrizioni di sicurezza
+                const proxyUrl = 'https://corsproxy.io/?';
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf.ticker}`;
                 
-                const response = await fetch(yahooUrl);
+                const response = await fetch(proxyUrl + encodeURIComponent(yahooUrl));
                 if (!response.ok) {
                     throw new Error('Errore nella richiesta');
                 }
