@@ -301,8 +301,8 @@
             <div class="section">
                 <h2>Riepilogo Portafoglio</h2>
                 <div class="note">
-                    L'aggiornamento automatico dei prezzi avviene tramite un proxy pubblico (corsproxy.io) con limiti d'uso. 
-                    Se l'aggiornamento fallisce, riprova più tardi o usa l'aggiornamento manuale.
+                    L'aggiornamento automatico dei prezzi avviene tramite Netlify Functions. 
+                    Gli aggiornamenti in tempo reale sono ora più affidabili.
                 </div>
                 <button id="updateAllPrices" style="margin-bottom: 10px;">Aggiorna Tutti i Prezzi in Tempo Reale</button>
                 <div class="summary">
@@ -559,13 +559,13 @@
                 
                 <div class="guide">
                     <h3>Come Aggiornare i Prezzi degli ETF</h3>
-                    <p>Questa versione supporta l'aggiornamento automatico dei prezzi tramite un proxy CORS pubblico:</p>
+                    <p>Questa versione supporta l'aggiornamento automatico dei prezzi tramite Netlify Functions:</p>
                     
                     <div class="steps">
                         <div class="step">1. Clicca sul pulsante <strong>"Prezzo Real-time"</strong> accanto all'ETF per ottenere il prezzo attuale</div>
                         <div class="step">2. Clicca su <strong>"Aggiorna Tutti i Prezzi in Tempo Reale"</strong> nella dashboard per aggiornare tutti gli ETF</div>
                         <div class="step">3. In alternativa, puoi ancora cliccare su "Yahoo" per vedere il prezzo su Yahoo Finance e poi inserirlo manualmente</div>
-                        <div class="step">4. Nota che il proxy pubblico ha limiti di utilizzo e potrebbe non funzionare sempre, in questo caso usa il metodo manuale</div>
+                        <div class="step">4. Gli aggiornamenti automatici sono ora molto più affidabili grazie all'uso di Netlify Functions</div>
                     </div>
                 </div>
                 
@@ -585,7 +585,6 @@
             </div>
         </div>
     </div>
-
     <script>
         // Dati
         let etfs = [];
@@ -724,7 +723,7 @@
             return { totalValue, totalCost, gainLoss, totalReturn };
         }
         
-        // Aggiorna il prezzo di un ETF da Yahoo Finance tramite proxy CORS
+        // NUOVA FUNZIONE: Aggiorna il prezzo di un ETF tramite Netlify Function
         async function updateRealPrice(etfId) {
             const etf = etfs.find(e => e.id === etfId);
             if (!etf) {
@@ -735,13 +734,23 @@
             try {
                 showStatus(`Recupero prezzo per ${etf.ticker}...`);
                 
-                // Usiamo un proxy CORS per aggirare le restrizioni di sicurezza
-                const proxyUrl = 'https://corsproxy.io/?';
-                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf.ticker}`;
+                // Percorso alla funzione Netlify
+                const netlifyFunction = '/.netlify/functions/getStockPrice';
                 
-                const response = await fetch(proxyUrl + encodeURIComponent(yahooUrl));
+                // Aggiungi un timestamp per evitare la cache
+                const timestamp = new Date().getTime();
+                const url = `${netlifyFunction}?ticker=${encodeURIComponent(etf.ticker)}&_=${timestamp}`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
                 if (!response.ok) {
-                    throw new Error('Errore nella richiesta');
+                    throw new Error(`Errore dal server: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
@@ -764,11 +773,84 @@
                 }
             } catch (error) {
                 console.error('Errore nel recupero del prezzo:', error);
-                showStatus(`Errore nel recupero del prezzo per ${etf.ticker}. Riprova più tardi.`);
+                showStatus(`Errore nel recupero del prezzo per ${etf.ticker}: ${error.message}`);
+                
+                // Fallback a metodo con proxy CORS se il metodo principale fallisce
+                return await updateRealPriceViaProxy(etfId);
+            }
+        }
+        
+        // FUNZIONE DI FALLBACK: Usa proxy CORS se Netlify Function fallisce
+        async function updateRealPriceViaProxy(etfId) {
+            const etf = etfs.find(e => e.id === etfId);
+            if (!etf) {
+                return false;
+            }
+            
+            try {
+                showStatus(`Tentativo alternativo per ${etf.ticker}...`);
+                
+                // Lista di proxy CORS da provare in sequenza
+                const proxyUrls = [
+                    'https://corsproxy.io/?',
+                    'https://api.allorigins.win/raw?url=',
+                    'https://thingproxy.freeboard.io/fetch/'
+                ];
+                
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf.ticker}`;
+                
+                // Prova ciascun proxy in sequenza
+                let response = null;
+                
+                for (const proxyUrl of proxyUrls) {
+                    try {
+                        const timestamp = new Date().getTime();
+                        const urlWithCache = `${yahooUrl}?_=${timestamp}`;
+                        
+                        response = await fetch(proxyUrl + encodeURIComponent(urlWithCache), {
+                            headers: {
+                                'Cache-Control': 'no-cache'
+                            },
+                            signal: AbortSignal.timeout(5000)
+                        });
+                        
+                        if (response.ok) {
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                if (!response || !response.ok) {
+                    throw new Error('Tutti i proxy hanno fallito');
+                }
+                
+                const data = await response.json();
+                
+                if (data.chart && data.chart.result && data.chart.result.length > 0) {
+                    const price = data.chart.result[0].meta.regularMarketPrice;
+                    const previousClose = data.chart.result[0].meta.previousClose || price;
+                    const priceChange = ((price - previousClose) / previousClose) * 100;
+                    
+                    etf.currentPrice = price;
+                    etf.priceChange = priceChange;
+                    etf.lastUpdate = new Date().toISOString();
+                    saveData();
+                    calculatePortfolio();
+                    
+                    showStatus(`Prezzo di ${etf.ticker} aggiornato a ${formatMoney(price)} (via proxy)`);
+                    return true;
+                } else {
+                    throw new Error('Dati mancanti nella risposta del proxy');
+                }
+            } catch (error) {
+                console.error('Errore nel recupero del prezzo via proxy:', error);
+                showStatus(`Tutti i tentativi di aggiornamento falliti per ${etf.ticker}.`);
                 return false;
             }
         }
-
+        
         // Aggiorna tutti i prezzi degli ETF in sequenza
         async function updateAllRealPrices() {
             if (etfs.length === 0) {
