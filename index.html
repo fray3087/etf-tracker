@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Tracker Pro</title>
+    <!-- Inclusione di Chart.js per i grafici -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        form div {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        input, select, button {
+            padding: 6px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .action-button {
+            width: auto;
+            margin-top: 0;
+            padding: 5px 10px;
+        }
+        
+        .yahoo-btn {
+            background-color: #7e57c2;
+        }
+        
+        .manual-update-btn {
+            background-color: #3498db;
+        }
+        
+        .real-price-btn {
+            background-color: #2ecc71;
+        }
+        
+        .demo-btn {
+            background-color: #f39c12;
+        }
+        
+        .up {
+            color: green;
+        }
+        
+        .down {
+            color: red;
+        }
+        
+        .summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .summary-item {
+            flex: 1;
+            min-width: 120px;
+            background-color: #f2f2f2;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .summary-item .value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .price-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        
+        .price-input {
+            width: 100px;
+        }
+        
+        .timestamp {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-color: #ddd;
+            margin-bottom: -1px;
+            padding-bottom: 9px;
+        }
+        
+        .guide {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .guide h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        .steps {
+            margin-left: 20px;
+        }
+        
+        .step {
+            margin-bottom: 8px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 15px 0;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .metric-card {
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .metric-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .time-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .time-btn {
+            background-color: #eee;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+            width: auto;
+            margin-top: 0;
+        }
+        
+        .time-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .performance-tabs {
+            display: flex;
+            margin: 15px 0 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .performance-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-right: 10px;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .performance-tab.active {
+            border-bottom-color: #3498db;
+            font-weight: bold;
+        }
+        
+        .performance-content {
+            display: none;
+        }
+        
+        .performance-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ETF Tracker Pro</h1>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" data-tab="main">Portafoglio</div>
+            <div class="tab" data-tab="performance">Performance</div>
+            <div class="tab" data-tab="add">Aggiungi</div>
+            <div class="tab" data-tab="transactions">Transazioni</div>
+            <div class="tab" data-tab="settings">Impostazioni</div>
+            <div class="tab" data-tab="help">Aiuto</div>
+        </div>
+        
+        <!-- Main Tab -->
+        <div id="main" class="tab-content">
+            <!-- Riepilogo -->
+            <div class="section">
+                <h2>Riepilogo Portafoglio</h2>
+                <button id="updateAllPrices" style="margin-bottom: 10px;">Aggiorna Tutti i Prezzi in Tempo Reale</button>
+                <div class="summary">
+                    <div class="summary-item">
+                        <div>Valore Totale</div>
+                        <div class="value" id="totalValue">€0,00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>Investimento</div>
+                        <div class="value" id="totalInvestment">€0,00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>Guadagno/Perdita</div>
+                        <div class="value" id="totalGainLoss">€0,00</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>Rendimento</div>
+                        <div class="value" id="totalReturn">0,00%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ETF List -->
+            <div class="section">
+                <h2>I Miei ETF</h2>
+                <table id="etfTable">
+                    <thead>
+                        <tr>
+                            <th>ETF</th>
+                            <th>Ticker</th>
+                            <th>Quote</th>
+                            <th>Prezzo Attuale</th>
+                            <th>Prezzo Medio</th>
+                            <th>Valore</th>
+                            <th>Gain/Loss</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Performance Tab -->
+        <div id="performance" class="tab-content" style="display: none;">
+            <div class="section">
+                <h2>Analisi delle Performance</h2>
+                
+                <!-- Time Period Selector -->
+                <div class="time-selector">
+                    <button class="time-btn active" data-period="1m">1 Mese</button>
+                    <button class="time-btn" data-period="3m">3 Mesi</button>
+                    <button class="time-btn" data-period="6m">6 Mesi</button>
+                    <button class="time-btn" data-period="1y">1 Anno</button>
+                    <button class="time-btn" data-period="ytd">Anno Corrente</button>
+                    <button class="time-btn" data-period="all">Tutto</button>
+                </div>
+                
+                <!-- Performance Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">MWR (Money-Weighted Return)</div>
+                        <div class="metric-value" id="mwrValue">0,00%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">TWR (Time-Weighted Return)</div>
+                        <div class="metric-value" id="twrValue">0,00%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">CAGR</div>
+                        <div class="metric-value" id="cagrValue">0,00%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Volatilità</div>
+                        <div class="metric-value" id="volatilityValue">0,00%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Sharpe Ratio</div>
+                        <div class="metric-value" id="sharpeValue">0,00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Sortino Ratio</div>
+                        <div class="metric-value" id="sortinoValue">0,00</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Max Drawdown</div>
+                        <div class="metric-value" id="maxDrawdownValue">0,00%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Giorni di Recupero</div>
+                        <div class="metric-value" id="recoveryDaysValue">0</div>
+                    </div>
+                </div>
+                
+                <!-- Performance Charts Tabs -->
+                <div class="performance-tabs">
+                    <div class="performance-tab active" data-performance-tab="portfolio">Andamento Portafoglio</div>
+                    <div class="performance-tab" data-performance-tab="drawdown">Drawdown</div>
+                    <div class="performance-tab" data-performance-tab="monthly">Rendimenti Mensili</div>
+                    <div class="performance-tab" data-performance-tab="annual">Rendimenti Annuali</div>
+                </div>
+                
+                <!-- Performance Charts Content -->
+                <div class="performance-content active" id="portfolio-chart">
+                    <div class="chart-container">
+                        <canvas id="portfolioChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="performance-content" id="drawdown-chart">
+                    <div class="chart-container">
+                        <canvas id="drawdownChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="performance-content" id="monthly-chart">
+                    <div class="chart-container">
+                        <canvas id="monthlyReturnsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="performance-content" id="annual-chart">
+                    <div class="chart-container">
+                        <canvas id="annualReturnsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Settings -->
+            <div class="section">
+                <h3>Impostazioni di Performance</h3>
+                <form id="performanceSettingsForm">
+                    <div>
+                        <label for="riskFreeRate">Tasso Risk-Free (%)</label>
+                        <input type="number" id="riskFreeRate" step="0.01" min="0" value="2.0">
+                    </div>
+                    <div>
+                        <label for="benchmarkReturn">Rendimento Benchmark (%)</label>
+                        <input type="number" id="benchmarkReturn" step="0.01" value="7.0">
+                    </div>
+                    <button type="submit">Aggiorna Impostazioni</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Add Tab -->
+        <div id="add" class="tab-content" style="display: none;">
+            <!-- Add ETF -->
+            <div class="section">
+                <h2>Aggiungi Nuovo ETF</h2>
+                <form id="addEtfForm">
+                    <div>
+                        <label for="etfName">Nome ETF</label>
+                        <input type="text" id="etfName" required>
+                    </div>
+                    <div>
+                        <label for="etfTicker">Ticker (es. SWDA.MI per Borsa Italiana)</label>
+                        <input type="text" id="etfTicker" required placeholder="es. SWDA.MI">
+                    </div>
+                    <div>
+                        <label for="etfInitialPrice">Prezzo Iniziale (€)</label>
+                        <input type="number" id="etfInitialPrice" step="0.01" min="0.01" required>
+                    </div>
+                    <button type="submit">Aggiungi ETF</button>
+                </form>
+            </div>
+            
+            <!-- Add Transaction -->
+            <div class="section">
+                <h2>Aggiungi Transazione</h2>
+                <form id="addTransactionForm">
+                    <div>
+                        <label for="transactionEtf">ETF</label>
+                        <select id="transactionEtf" required>
+                            <option value="">Seleziona ETF</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="transactionType">Tipo</label>
+                        <select id="transactionType" required>
+                            <option value="buy">Acquisto</option>
+                            <option value="sell">Vendita</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="transactionDate">Data</label>
+                        <input type="date" id="transactionDate" required>
+                    </div>
+                    <div>
+                        <label for="transactionShares">Numero Quote</label>
+                        <input type="number" id="transactionShares" step="0.0001" min="0.0001" required>
+                    </div>
+                    <div>
+                        <label for="transactionPrice">Prezzo per Quota</label>
+                        <input type="number" id="transactionPrice" step="0.01" min="0.01" required>
+                    </div>
+                    <button type="submit">Salva Transazione</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content" style="display: none;">
+            <div class="section">
+                <h2>Registro Transazioni</h2>
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>ETF</th>
+                            <th>Tipo</th>
+                            <th>Quote</th>
+                            <th>Prezzo</th>
+                            <th>Totale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content" style="display: none;">
+            <div class="section">
+                <h2>Tracking Valori Portafoglio</h2>
+                <p>Registra il valore attuale del portafoglio per un miglior calcolo delle performance.</p>
+                <button id="recordPortfolioValue">Registra Valore Attuale</button>
+                <button id="generateSampleHistory" class="demo-btn" style="margin-top: 10px;">Genera Storico Dimostrativo</button>
+                <div id="lastRecordedValue" class="status"></div>
+            </div>
+            
+            <div class="section">
+                <h2>Dati</h2>
+                <button id="exportData">Esporta Dati</button>
+                <div style="margin-top: 10px;">
+                    <label for="importData">Importa Dati</label>
+                    <input type="file" id="importData" accept=".json">
+                </div>
+                <div style="margin-top: 20px;">
+                    <button id="resetData" style="background-color: #f44336;">Reset Completo Dati</button>
+                </div>
+                <div id="statusMessage" class="status"></div>
+            </div>
+        </div>
+        
+        <!-- Help Tab -->
+        <div id="help" class="tab-content" style="display: none;">
+            <div class="section">
+                <h2>Guida all'Aggiornamento dei Prezzi</h2>
+                
+                <div class="guide">
+                    <h3>Come Aggiornare i Prezzi degli ETF</h3>
+                    <p>Questa versione supporta l'aggiornamento automatico dei prezzi tramite Yahoo Finance:</p>
+                    
+                    <div class="steps">
+                        <div class="step">1. Clicca sul pulsante <strong>"Prezzo Real-time"</strong> accanto all'ETF per ottenere il prezzo attuale da Yahoo Finance</div>
+                        <div class="step">2. Clicca su <strong>"Aggiorna Tutti i Prezzi in Tempo Reale"</strong> nella dashboard per aggiornare tutti gli ETF in una volta</div>
+                        <div class="step">3. In alternativa, puoi ancora inserire manualmente il prezzo utilizzando il campo e il pulsante "Aggiorna"</div>
+                    </div>
+                </div>
+                
+                <div class="guide" style="margin-top: 20px;">
+                    <h3>Cos'è la pagina Performance?</h3>
+                    <p>La pagina Performance mostra metriche avanzate sul tuo portafoglio:</p>
+                    <ul>
+                        <li><strong>MWR</strong> (Money-Weighted Return): Rendimento ponderato per il capitale, tiene conto dei flussi di cassa</li>
+                        <li><strong>TWR</strong> (Time-Weighted Return): Rendimento ponderato per il tempo, neutralizza l'effetto dei flussi di cassa</li>
+                        <li><strong>CAGR</strong> (Compound Annual Growth Rate): Tasso di crescita annuo composto</li>
+                        <li><strong>Sharpe Ratio</strong>: Misura il rendimento in eccesso rispetto al rischio assunto</li>
+                        <li><strong>Sortino Ratio</strong>: Simile allo Sharpe, ma considera solo la volatilità negativa</li>
+                        <li><strong>Max Drawdown</strong>: Massima perdita percentuale dal picco più alto al punto più basso</li>
+                    </ul>
+                    <p>Per ottenere metriche precise, è importante registrare regolarmente il valore del portafoglio nella scheda Impostazioni.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dati
+        let etfs = [];
+        let transactions = [];
+        let portfolioHistory = [];
+        let performanceSettings = {
+            riskFreeRate: 2.0,  // tasso percentuale
+            benchmarkReturn: 7.0  // tasso percentuale
+        };
+        
+        // Formattazione
+        function formatMoney(amount) {
+            return '€' + amount.toFixed(2).replace('.', ',');
+        }
+        
+        function formatPercent(value) {
+            return value.toFixed(2).replace('.', ',') + '%';
+        }
+        
+        function formatNumber(value, decimals = 2) {
+            return value.toFixed(decimals).replace('.', ',');
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT');
+        }
+        
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Mai aggiornato';
+            const date = new Date(timestamp);
+            return date.toLocaleString('it-IT');
+        }
+        
+        // Carica dati
+        function loadData() {
+            const savedData = localStorage.getItem('etfTrackerData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    etfs = data.etfs || [];
+                    transactions = data.transactions || [];
+                    portfolioHistory = data.portfolioHistory || [];
+                    performanceSettings = data.performanceSettings || {
+                        riskFreeRate: 2.0,
+                        benchmarkReturn: 7.0
+                    };
+                    
+                    // Aggiorna i campi delle impostazioni di performance
+                    document.getElementById('riskFreeRate').value = performanceSettings.riskFreeRate;
+                    document.getElementById('benchmarkReturn').value = performanceSettings.benchmarkReturn;
+                } catch (e) {
+                    console.error("Errore nel caricamento dei dati:", e);
+                    resetData(false);
+                }
+            }
+        }
+        
+        // Salva dati
+        function saveData() {
+            localStorage.setItem('etfTrackerData', JSON.stringify({
+                etfs: etfs,
+                transactions: transactions,
+                portfolioHistory: portfolioHistory,
+                performanceSettings: performanceSettings
+            }));
+        }
+        
+        // Apri Yahoo Finance per un ticker
+        function openYahooFinance(ticker) {
+            window.open(`https://it.finance.yahoo.com/quote/${ticker}`, '_blank');
+        }
+        
+        // Calcola portafoglio
+        function calculatePortfolio() {
+            // Reset valori
+            let totalValue = 0;
+            let totalCost = 0;
+            
+            // Calcola possesso per ogni ETF
+            const holdings = {};
+            
+            // Calcola possesso da transazioni
+            transactions.forEach(transaction => {
+                if (!holdings[transaction.etfId]) {
+                    holdings[transaction.etfId] = {
+                        shares: 0,
+                        cost: 0
+                    };
+                }
+                
+                if (transaction.type === 'buy') {
+                    holdings[transaction.etfId].shares += transaction.shares;
+                    holdings[transaction.etfId].cost += transaction.shares * transaction.price;
+                } else {
+                    holdings[transaction.etfId].shares -= transaction.shares;
+                }
+            });
+            
+            // Aggiorna ETF con valori calcolati
+            etfs.forEach(etf => {
+                const holding = holdings[etf.id] || { shares: 0, cost: 0 };
+                
+                // Aggiorna metriche
+                etf.shares = holding.shares;
+                etf.totalCost = holding.cost;
+                etf.averagePrice = holding.shares > 0 ? holding.cost / holding.shares : 0;
+                etf.value = holding.shares * etf.currentPrice;
+                etf.gainLoss = etf.value - holding.cost;
+                
+                totalValue += etf.value;
+                totalCost += holding.cost;
+            });
+            
+            // Aggiorna sommario
+            document.getElementById('totalValue').textContent = formatMoney(totalValue);
+            document.getElementById('totalInvestment').textContent = formatMoney(totalCost);
+            
+            const gainLoss = totalValue - totalCost;
+            document.getElementById('totalGainLoss').textContent = formatMoney(gainLoss);
+            document.getElementById('totalGainLoss').className = 'value ' + (gainLoss >= 0 ? 'up' : 'down');
+            
+            const totalReturn = totalCost > 0 ? (gainLoss / totalCost) * 100 : 0;
+            document.getElementById('totalReturn').textContent = formatPercent(totalReturn);
+            document.getElementById('totalReturn').className = 'value ' + (totalReturn >= 0 ? 'up' : 'down');
+            
+            // Aggiorna informazioni ultimo valore registrato
+            updateLastRecordedValue();
+            
+            // Aggiorna tabella ETF
+            updateEtfTable();
+            
+            // Salva dati
+            saveData();
+            
+            return { totalValue, totalCost, gainLoss, totalReturn };
+        }
+        
+        // Aggiorna il prezzo di un ETF da Yahoo Finance (versione GitHub Pages)
+        async function updateRealPrice(etfId) {
+            const etf = etfs.find(e => e.id === etfId);
+            if (!etf) {
+                showStatus('ETF non trovato.');
+                return false;
+            }
+            
+            try {
+                showStatus(`Recupero prezzo per ${etf.ticker}...`);
+                
+                // Usiamo l'API di Yahoo Finance direttamente
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${etf.ticker}`;
+                
+                const response = await fetch(yahooUrl);
+                if (!response.ok) {
+                    throw new Error('Errore nella richiesta');
+                }
+                
+                const data = await response.json();
+                
+                if (data.chart && data.chart.result && data.chart.result.length > 0) {
+                    const price = data.chart.result[0].meta.regularMarketPrice;
+                    const previousClose = data.chart.result[0].meta.previousClose || price;
+                    const priceChange = ((price - previousClose) / previousClose) * 100;
+                    
+                    etf.currentPrice = price;
+                    etf.priceChange = priceChange;
+                    etf.lastUpdate = new Date().toISOString();
+                    saveData();
+                    calculatePortfolio();
+                    
+                    showStatus(`Prezzo di ${etf.ticker} aggiornato a ${formatMoney(price)}`);
+                    return true;
+                } else {
+                    throw new Error('Dati mancanti nella risposta');
+                }
+            } catch (error) {
+                console.error('Errore nel recupero del prezzo:', error);
+                showStatus(`Errore nel recupero del prezzo per ${etf.ticker}. Riprova più tardi.`);
+                return false;
+            }
+        }
+
+        // Aggiorna tutti i prezzi degli ETF in sequenza
+        async function updateAllRealPrices() {
+            if (etfs.length === 0) {
+                showStatus('Non ci sono ETF da aggiornare.');
+                return;
+            }
+            
+            showStatus('Avvio aggiornamento prezzi...');
+            
+            let successi = 0;
+            let fallimenti = 0;
+            
+            for (const etf of etfs) {
+                const success = await updateRealPrice(etf.id);
+                if (success) {
+                    successi++;
+                } else {
+                    fallimenti++;
+                }
+                
+                // Attendi un po' tra le richieste per evitare di sovraccaricare l'API
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            showStatus(`Aggiornamento completato: ${successi} ETF aggiornati, ${fallimenti} falliti.`);
+        }
+        
+        // Registra il valore del portafoglio per tracciamento storico
+        function recordPortfolioValue() {
+            const portfolioValue = calculatePortfolioValue();
+            const date = new Date();
+            
+            // Verifica se esiste già un record per oggi
+            const today = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            const existingIndex = portfolioHistory.findIndex(entry => entry.date.split('T')[0] === today);
+            
+            if (existingIndex >= 0) {
+                // Sovrascrive il valore esistente per oggi
+                portfolioHistory[existingIndex] = {
+                    date: date.toISOString(),
+                    value: portfolioValue
+                };
+            } else {
+                // Aggiunge un nuovo valore
+                portfolioHistory.push({
+                    date: date.toISOString(),
+                    value: portfolioValue
+                });
+            }
+            
+            // Ordina la storia del portafoglio per data
+            portfolioHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            saveData();
+            updateLastRecordedValue();
+            showStatus('Valore del portafoglio registrato con successo!');
+            
+            // Aggiorna grafici di performance se visibili
+            if (document.getElementById('performance').style.display !== 'none') {
+                calculatePerformanceMetrics();
+                updatePerformanceCharts();
+            }
+        }
+        
+        // Genera dati storici dimostrativi
+        function generateSampleHistory() {
+            if (confirm('Questo genererà dati storici di esempio per dimostrare le funzionalità di performance. Questo sovrascriverà qualsiasi dato storico esistente. Vuoi procedere?')) {
+                // Ottieni il valore attuale del portafoglio
+                const currentValue = calculatePortfolioValue();
+                if (currentValue <= 0) {
+                    alert('Aggiungi prima almeno un ETF e una transazione di acquisto per generare dati dimostrativi.');
+                    return;
+                }
+                
+                const now = new Date();
+                
+                // Genera 365 giorni di storia simulata (1 anno)
+                portfolioHistory = [];
+                
+                // Pattern realistico: tendenza al rialzo con un bear market nel mezzo
+                let baseValue = currentValue * 0.7; // Iniziamo con un valore inferiore
+                
+                // Funzione per generare trend di mercato realistici
+                function generateMarketPatterns(days, initialValue, finalMultiplier, volatility) {
+                    const values = [];
+                    // Funzione di trend esponenziale smussato con rumore
+                    for (let i = 0; i < days; i++) {
+                        const progress = i / (days - 1);
+                        // Trend di base (crescita esponenziale)
+                        const trendValue = initialValue * (1 + (finalMultiplier - 1) * progress);
+                        // Aggiungi rumore (volatilità)
+                        const noise = 1 + (Math.random() * 2 - 1) * volatility;
+                        values.push(trendValue * noise);
+                    }
+                    return values;
+                }
+                
+                // 1. Periodo di bull market (6 mesi)
+                const bullMarketDays = 180;
+                const bullMarketValues = generateMarketPatterns(bullMarketDays, baseValue, 1.35, 0.012);
+                
+                // 2. Periodo di correzione (2 mesi)
+                const correctionDays = 60;
+                const startCorrectionValue = bullMarketValues[bullMarketValues.length - 1];
+                const correctionValues = generateMarketPatterns(correctionDays, startCorrectionValue, 0.82, 0.018);
+                
+                // 3. Periodo di ripresa (4 mesi)
+                const recoveryDays = 125;
+                const startRecoveryValue = correctionValues[correctionValues.length - 1];
+                const recoveryValues = generateMarketPatterns(recoveryDays, startRecoveryValue, 1.25, 0.015);
+                
+                // Combina tutti i valori
+                const allValues = [...bullMarketValues, ...correctionValues, ...recoveryValues];
+                
+                // Crea gli entry di storia del portafoglio
+                for (let i = 0; i < allValues.length; i++) {
+                    const date = new Date();
+                    date.setDate(now.getDate() - (allValues.length - 1 - i));
+                    
+                    portfolioHistory.push({
+                        date: date.toISOString(),
+                        value: allValues[i]
+                    });
+                }
+                
+                saveData();
+                updateLastRecordedValue();
+                showStatus('Dati storici dimostrativi generati con successo!');
+                
+                // Se siamo nella scheda performance, aggiorna le visualizzazioni
+                if (document.getElementById('performance').style.display !== 'none') {
+                    calculatePerformanceMetrics();
+                    updatePerformanceCharts();
+                } else {
+                    // Suggerisci di andare alla scheda performance
+                    setTimeout(() => {
+                        showStatus('Vai alla scheda "Performance" per vedere le metriche e i grafici!');
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Calcola il valore totale del portafoglio
+        function calculatePortfolioValue() {
+            return etfs.reduce((total, etf) => total + etf.value, 0);
+        }
+        
+        // Aggiorna informazioni sull'ultimo valore registrato
+        function updateLastRecordedValue() {
+            const lastRecordElement = document.getElementById('lastRecordedValue');
+            
+            if (portfolioHistory.length > 0) {
+                const lastRecord = portfolioHistory[portfolioHistory.length - 1];
+                const date = new Date(lastRecord.date);
+                lastRecordElement.textContent = `Ultimo valore registrato: ${formatMoney(lastRecord.value)} il ${date.toLocaleDateString('it-IT')} alle ${date.toLocaleTimeString('it-IT')}`;
+            } else {
+                lastRecordElement.textContent = 'Nessun valore registrato. Registra il valore attuale o genera dati dimostrativi per visualizzare le metriche di performance.';
+            }
+        }
+        
+        // Aggiorna tabella ETF
+        function updateEtfTable() {
+            const tableBody = document.getElementById('etfTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            
+            etfs.forEach(etf => {
+                if (etf.shares <= 0) return; // Salta ETF senza quote
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${etf.name}</td>
+                    <td>${etf.ticker}</td>
+                    <td>${etf.shares.toFixed(4)}</td>
+                    <td>${formatMoney(etf.currentPrice)}</td>
+                    <td>${formatMoney(etf.averagePrice)}</td>
+                    <td>${formatMoney(etf.value)}</td>
+                    <td class="${etf.gainLoss >= 0 ? 'up' : 'down'}">${formatMoney(etf.gainLoss)}</td>
+                    <td>
+                        <div class="price-actions">
+                            <button class="action-button real-price-btn" data-id="${etf.id}">Prezzo Real-time</button>
+                            <button class="action-button yahoo-btn" data-ticker="${etf.ticker}">Yahoo</button>
+                            <input type="number" step="0.01" min="0" placeholder="Prezzo" class="price-input" data-id="${etf.id}">
+                            <button class="action-button manual-update-btn" data-id="${etf.id}">Aggiorna</button>
+                        </div>
+                        <div class="timestamp">Ultimo agg.: ${formatTimestamp(etf.lastUpdate)}</div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Aggiungi event listeners
+            document.querySelectorAll('.yahoo-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const ticker = this.dataset.ticker;
+                    openYahooFinance(ticker);
+                });
+            });
+            
+            document.querySelectorAll('.manual-update-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const etfId = this.dataset.id;
+                    const priceInput = this.previousElementSibling; // il campo input precedente
+                    const newPrice = parseFloat(priceInput.value);
+                    
+                    if (!isNaN(newPrice) && newPrice > 0) {
+                        const etf = etfs.find(e => e.id === etfId);
+                        if (etf) {
+                            etf.currentPrice = newPrice;
+                            etf.lastUpdate = new Date().toISOString();
+                            calculatePortfolio();
+                            priceInput.value = '';
+                            showStatus('Prezzo aggiornato con successo!');
+                        }
+                    } else {
+                        showStatus('Inserisci un prezzo valido.');
+                    }
+                });
+            });
+            
+            // Aggiungi event listeners al pulsante "Prezzo Real-time"
+            document.querySelectorAll('.real-price-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const etfId = this.dataset.id;
+                    await updateRealPrice(etfId);
+                });
+            });
+            
+            // Aggiorna il dropdown per le transazioni
+            const select = document.getElementById('transactionEtf');
+            select.innerHTML = '<option value="">Seleziona ETF</option>';
+            
+            etfs.forEach(etf => {
+                const option = document.createElement('option');
+                option.value = etf.id;
+                option.textContent = `${etf.name} (${etf.ticker})`;
+                select.appendChild(option);
+            });
+        }
+        
+        // Aggiorna tabella transazioni
+        function updateTransactionsTable() {
+            const tableBody = document.getElementById('transactionsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            
+            // Ordina per data (più recenti prima)
+            const sortedTransactions = [...transactions]
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach(transaction => {
+                const etf = etfs.find(e => e.id === transaction.etfId);
+                if (!etf) return;
+                
+                const total = transaction.shares * transaction.price;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${etf.name}</td>
+                    <td>${transaction.type === 'buy' ? 'Acquisto' : 'Vendita'}</td>
+                    <td>${transaction.shares.toFixed(4)}</td>
+                    <td>${formatMoney(transaction.price)}</td>
+                    <td>${formatMoney(total)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Calcola metriche di performance
+        function calculatePerformanceMetrics() {
+            if (portfolioHistory.length < 2) {
+                showStatus('Servono almeno due registrazioni del valore del portafoglio per calcolare le metriche di performance. Usa il bottone "Genera Storico Dimostrativo" nella scheda Impostazioni per creare dati di esempio.');
+                return;
+            }
+            
+            // Ottieni il periodo selezionato
+            const selectedPeriod = document.querySelector('.time-btn.active').dataset.period;
+            
+            // Filtra i dati in base al periodo selezionato
+            const filteredHistory = filterHistoryByPeriod(selectedPeriod);
+            
+            if (filteredHistory.length < 2) {
+                showDefaultPerformanceValues();
+                showStatus('Dati insufficienti per il periodo selezionato.');
+                return;
+            }
+            
+            // Calcola TWR (Time-Weighted Return)
+            const twr = calculateTWR(filteredHistory);
+            document.getElementById('twrValue').textContent = formatPercent(twr);
+            document.getElementById('twrValue').className = twr >= 0 ? 'metric-value up' : 'metric-value down';
+            
+            // Calcola MWR (Money-Weighted Return)
+            const mwr = calculateMWR(filteredHistory);
+            document.getElementById('mwrValue').textContent = formatPercent(mwr);
+            document.getElementById('mwrValue').className = mwr >= 0 ? 'metric-value up' : 'metric-value down';
+            
+            // Calcola CAGR (Compound Annual Growth Rate)
+            const cagr = calculateCAGR(filteredHistory);
+            document.getElementById('cagrValue').textContent = formatPercent(cagr);
+            document.getElementById('cagrValue').className = cagr >= 0 ? 'metric-value up' : 'metric-value down';
+            
+            // Calcola Volatilità
+            const volatility = calculateVolatility(filteredHistory);
+            document.getElementById('volatilityValue').textContent = formatPercent(volatility);
+            
+            // Calcola Sharpe Ratio
+            const sharpe = calculateSharpeRatio(filteredHistory, performanceSettings.riskFreeRate, volatility);
+            document.getElementById('sharpeValue').textContent = formatNumber(sharpe);
+            document.getElementById('sharpeValue').className = sharpe >= 0 ? 'metric-value up' : 'metric-value down';
+            
+            // Calcola Sortino Ratio
+            const sortino = calculateSortinoRatio(filteredHistory, performanceSettings.riskFreeRate);
+            document.getElementById('sortinoValue').textContent = formatNumber(sortino);
+            document.getElementById('sortinoValue').className = sortino >= 0 ? 'metric-value up' : 'metric-value down';
+            
+            // Calcola Max Drawdown
+            const drawdownInfo = calculateMaxDrawdown(filteredHistory);
+            document.getElementById('maxDrawdownValue').textContent = formatPercent(-drawdownInfo.maxDrawdown);
+            document.getElementById('recoveryDaysValue').textContent = drawdownInfo.recoveryDays || 'N/A';
+        }
+        
+        // Filtra la storia del portafoglio in base al periodo
+        function filterHistoryByPeriod(period) {
+            const now = new Date();
+            let cutoffDate = new Date();
+            
+            switch (period) {
+                case '1m':
+                    cutoffDate.setMonth(now.getMonth() - 1);
+                    break;
+                case '3m':
+                    cutoffDate.setMonth(now.getMonth() - 3);
+                    break;
+                case '6m':
+                    cutoffDate.setMonth(now.getMonth() - 6);
+                    break;
+                case '1y':
+                    cutoffDate.setFullYear(now.getFullYear() - 1);
+                    break;
+                case 'ytd':
+                    cutoffDate = new Date(now.getFullYear(), 0, 1); // 1 Gennaio dell'anno corrente
+                    break;
+                case 'all':
+                    cutoffDate = new Date(0); // Inizio dell'epoca UNIX
+                    break;
+            }
+            
+            return portfolioHistory.filter(entry => new Date(entry.date) >= cutoffDate);
+        }
+        
+        // Imposta valori predefiniti per le metriche di performance
+        function showDefaultPerformanceValues() {
+            document.getElementById('twrValue').textContent = 'N/A';
+            document.getElementById('twrValue').className = 'metric-value';
+            document.getElementById('mwrValue').textContent = 'N/A';
+            document.getElementById('mwrValue').className = 'metric-value';
+            document.getElementById('cagrValue').textContent = 'N/A';
+            document.getElementById('cagrValue').className = 'metric-value';
+            document.getElementById('volatilityValue').textContent = 'N/A';
+            document.getElementById('sharpeValue').textContent = 'N/A';
+            document.getElementById('sharpeValue').className = 'metric-value';
+            document.getElementById('sortinoValue').textContent = 'N/A';
+            document.getElementById('sortinoValue').className = 'metric-value';
+            document.getElementById('maxDrawdownValue').textContent = 'N/A';
+            document.getElementById('recoveryDaysValue').textContent = 'N/A';
+        }
+        
+        // Calcola il TWR (Time-Weighted Return)
+        function calculateTWR(history) {
+            if (history.length < 2) return 0;
+            
+            const firstValue = history[0].value;
+            const lastValue = history[history.length - 1].value;
+            
+            return ((lastValue / firstValue) - 1) * 100;
+        }
+        
+        // Calcola il MWR (Money-Weighted Return)
+        function calculateMWR(history) {
+            // Semplificazione: uso TWR come approssimazione in questa versione
+            // Per un calcolo esatto del MWR, sarebbe necessario implementare il metodo IRR (Internal Rate of Return)
+            return calculateTWR(history);
+        }
+        
+        // Calcola il CAGR (Compound Annual Growth Rate)
+        function calculateCAGR(history) {
+            if (history.length < 2) return 0;
+            
+            const firstValue = history[0].value;
+            const lastValue = history[history.length - 1].value;
+            const firstDate = new Date(history[0].date);
+            const lastDate = new Date(history[history.length - 1].date);
+            
+            // Calcola il numero di anni tra il primo e l'ultimo valore
+            const yearsDiff = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 365.25);
+            
+            if (yearsDiff < 0.01) {
+                return ((lastValue / firstValue) - 1) * 100; // Rendimento semplice per periodi molto brevi
+            }
+            
+            return (Math.pow(lastValue / firstValue, 1 / yearsDiff) - 1) * 100;
+        }
+        
+        // Calcola la volatilità (deviazione standard dei rendimenti giornalieri)
+        function calculateVolatility(history) {
+            if (history.length < 3) return 0;
+            
+            // Calcola i rendimenti giornalieri
+            const returns = [];
+            for (let i = 1; i < history.length; i++) {
+                const prevValue = history[i-1].value;
+                const currValue = history[i].value;
+                returns.push((currValue / prevValue) - 1);
+            }
+            
+            // Calcola la media dei rendimenti
+            const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+            
+            // Calcola la deviazione standard
+            const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+            const stdDev = Math.sqrt(variance);
+            
+            // Annualizza la volatilità (approssimazione)
+            return stdDev * Math.sqrt(252) * 100; // 252 è il numero tipico di giorni di trading in un anno
+        }
+        
+        // Calcola lo Sharpe Ratio
+        function calculateSharpeRatio(history, riskFreeRate, volatility) {
+            if (history.length < 2 || volatility === 0) return 0;
+            
+            const firstValue = history[0].value;
+            const lastValue = history[history.length - 1].value;
+            const firstDate = new Date(history[0].date);
+            const lastDate = new Date(history[history.length - 1].date);
+            
+            // Calcola il rendimento annualizzato
+            const yearsDiff = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 365.25);
+            if (yearsDiff < 0.01) return 0; // Periodo troppo breve
+            
+            const annualizedReturn = (Math.pow(lastValue / firstValue, 1 / yearsDiff) - 1) * 100;
+            
+            // Sharpe Ratio = (Rendimento del portafoglio - Tasso risk-free) / Volatilità
+            return (annualizedReturn - riskFreeRate) / volatility;
+        }
+        
+        // Calcola il Sortino Ratio
+        function calculateSortinoRatio(history, riskFreeRate) {
+            if (history.length < 3) return 0;
+            
+            // Calcola i rendimenti giornalieri
+            const returns = [];
+            for (let i = 1; i < history.length; i++) {
+                const prevValue = history[i-1].value;
+                const currValue = history[i].value;
+                returns.push((currValue / prevValue) - 1);
+            }
+            
+            // Filtra solo i rendimenti negativi
+            const negativeReturns = returns.filter(r => r < 0);
+            if (negativeReturns.length === 0) return 0; // Non ci sono rendimenti negativi
+            
+            // Calcola la deviazione standard dei rendimenti negativi (downside deviation)
+            const meanNegative = negativeReturns.reduce((sum, r) => sum + r, 0) / negativeReturns.length;
+            const varianceNegative = negativeReturns.reduce((sum, r) => sum + Math.pow(r - meanNegative, 2), 0) / negativeReturns.length;
+            const downsideDeviation = Math.sqrt(varianceNegative) * Math.sqrt(252) * 100; // Annualizzato
+            
+            if (downsideDeviation === 0) return 0;
+            
+            // Calcola il rendimento annualizzato
+            const firstValue = history[0].value;
+            const lastValue = history[history.length - 1].value;
+            const firstDate = new Date(history[0].date);
+            const lastDate = new Date(history[history.length - 1].date);
+            const yearsDiff = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 365.25);
+            if (yearsDiff < 0.01) return 0; // Periodo troppo breve
+            
+            const annualizedReturn = (Math.pow(lastValue / firstValue, 1 / yearsDiff) - 1) * 100;
+            
+            // Sortino Ratio = (Rendimento del portafoglio - Tasso risk-free) / Downside Deviation
+            return (annualizedReturn - riskFreeRate) / downsideDeviation;
+        }
+        
+        // Calcola il Max Drawdown
+        function calculateMaxDrawdown(history) {
+            if (history.length < 2) return { maxDrawdown: 0, recoveryDays: 0 };
+            
+            let maxValue = history[0].value;
+            let maxDrawdown = 0;
+            let drawdownStart = null;
+            let drawdownEnd = null;
+            let recoveryDate = null;
+            
+            for (let i = 1; i < history.length; i++) {
+                const currentValue = history[i].value;
+                
+                // Aggiorna il valore massimo
+                if (currentValue > maxValue) {
+                    maxValue = currentValue;
+                    // Se eravamo in drawdown e ora siamo tornati al di sopra del massimo precedente, abbiamo recuperato
+                    if (drawdownStart !== null && recoveryDate === null) {
+                        recoveryDate = new Date(history[i].date);
+                    }
+                }
+                
+                // Calcola il drawdown corrente
+                const drawdown = (maxValue - currentValue) / maxValue;
+                
+                // Aggiorna il drawdown massimo
+                if (drawdown > maxDrawdown) {
+                    maxDrawdown = drawdown;
+                    drawdownEnd = new Date(history[i].date);
+                    // Reset del recoveryDate poiché siamo in un nuovo massimo drawdown
+                    recoveryDate = null;
+                    
+                    // Se questo è il primo drawdown o un nuovo drawdown dopo un recupero
+                    if (drawdownStart === null) {
+                        // Trova l'indice del picco prima di questo drawdown
+                        let peakIndex = i;
+                        for (let j = i - 1; j >= 0; j--) {
+                            if (history[j].value === maxValue) {
+                                peakIndex = j;
+                                break;
+                            }
+                        }
+                        drawdownStart = new Date(history[peakIndex].date);
+                    }
+                }
+            }
+            
+            // Calcola i giorni di recupero
+            let recoveryDays = 0;
+            if (drawdownEnd && recoveryDate) {
+                recoveryDays = Math.floor((recoveryDate - drawdownEnd) / (1000 * 60 * 60 * 24));
+            }
+            
+            return {
+                maxDrawdown: maxDrawdown * 100, // Converti in percentuale
+                recoveryDays: recoveryDays || null
+            };
+        }
+        
+        // Aggiorna i grafici di performance
+        function updatePerformanceCharts() {
+            // Ottieni il periodo selezionato
+            const selectedPeriod = document.querySelector('.time-btn.active').dataset.period;
+            
+            // Filtra i dati in base al periodo selezionato
+            const filteredHistory = filterHistoryByPeriod(selectedPeriod);
+            
+            if (filteredHistory.length < 2) {
+                showStatus('Dati insufficienti per visualizzare i grafici del periodo selezionato.');
+                return;
+            }
+            
+            // Aggiorna il grafico dell'andamento del portafoglio
+            updatePortfolioChart(filteredHistory);
+            
+            // Aggiorna il grafico del drawdown
+            updateDrawdownChart(filteredHistory);
+            
+            // Aggiorna il grafico dei rendimenti mensili
+            updateMonthlyReturnsChart(filteredHistory);
+            
+            // Aggiorna il grafico dei rendimenti annuali
+            updateAnnualReturnsChart(filteredHistory);
+        }
+        
+        // Aggiorna il grafico dell'andamento del portafoglio
+        function updatePortfolioChart(history) {
+            // Prepara i dati per il grafico
+            const labels = history.map(entry => new Date(entry.date).toLocaleDateString('it-IT'));
+            const values = history.map(entry => entry.value);
+            
+            // Calcola un buon punto di partenza per l'asse y
+            const minValue = Math.min(...values) * 0.95;
+            const maxValue = Math.max(...values) * 1.05;
+            
+            // Se esiste già un grafico, lo distrugge
+            if (window.portfolioChart instanceof Chart) {
+                window.portfolioChart.destroy();
+            }
+            
+            // Crea il nuovo grafico
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            window.portfolioChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valore Portafoglio',
+                        data: values,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: minValue,
+                            max: maxValue,
+                            ticks: {
+                                callback: function(value) {
+                                    return '€' + value.toLocaleString('it-IT');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Valore: ' + formatMoney(context.raw);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Aggiorna il grafico del drawdown
+        function updateDrawdownChart(history) {
+            if (history.length < 2) return;
+            
+            // Calcola i valori di drawdown
+            let maxValue = history[0].value;
+            const drawdowns = [];
+            const labels = [];
+            
+            for (let i = 0; i < history.length; i++) {
+                const date = new Date(history[i].date);
+                labels.push(date.toLocaleDateString('it-IT'));
+                
+                const value = history[i].value;
+                if (value > maxValue) {
+                    maxValue = value;
+                }
+                
+                const drawdown = (maxValue - value) / maxValue * 100; // in percentuale
+                drawdowns.push(-drawdown); // valore negativo per visualizzazione
+            }
+            
+            // Se esiste già un grafico, lo distrugge
+            if (window.drawdownChart instanceof Chart) {
+                window.drawdownChart.destroy();
+            }
+            
+            // Crea il nuovo grafico
+            const ctx = document.getElementById('drawdownChart').getContext('2d');
+            window.drawdownChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Drawdown (%)',
+                        data: drawdowns,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Drawdown: ' + context.raw.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Aggiorna il grafico dei rendimenti mensili
+        function updateMonthlyReturnsChart(history) {
+            if (history.length < 2) return;
+            
+            // Raggruppa i dati per mese
+            const monthlyData = {};
+            
+            for (let i = 0; i < history.length; i++) {
+                const date = new Date(history[i].date);
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!monthlyData[monthYear]) {
+                    monthlyData[monthYear] = {
+                        values: [],
+                        month: date.toLocaleString('it-IT', { month: 'short', year: 'numeric' })
+                    };
+                }
+                
+                monthlyData[monthYear].values.push(history[i].value);
+            }
+            
+            // Calcola i rendimenti mensili
+            const labels = [];
+            const returns = [];
+            
+            const monthYears = Object.keys(monthlyData).sort();
+            for (let i = 0; i < monthYears.length; i++) {
+                const monthYear = monthYears[i];
+                const values = monthlyData[monthYear].values;
+                
+                if (values.length > 1) {
+                    const firstValue = values[0];
+                    const lastValue = values[values.length - 1];
+                    const monthReturn = ((lastValue / firstValue) - 1) * 100;
+                    
+                    labels.push(monthlyData[monthYear].month);
+                    returns.push(monthReturn);
+                }
+            }
+            
+            // Se esiste già un grafico, lo distrugge
+            if (window.monthlyReturnsChart instanceof Chart) {
+                window.monthlyReturnsChart.destroy();
+            }
+            
+            // Crea il nuovo grafico
+            const ctx = document.getElementById('monthlyReturnsChart').getContext('2d');
+            window.monthlyReturnsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Rendimento Mensile (%)',
+                        data: returns,
+                        backgroundColor: returns.map(value => value >= 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'),
+                        borderColor: returns.map(value => value >= 0 ? 'rgb(46, 204, 113)' : 'rgb(231, 76, 60)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Rendimento: ' + context.raw.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Aggiorna il grafico dei rendimenti annuali
+        function updateAnnualReturnsChart(history) {
+            if (history.length < 2) return;
+            
+            // Raggruppa i dati per anno
+            const annualData = {};
+            
+            for (let i = 0; i < history.length; i++) {
+                const date = new Date(history[i].date);
+                const year = date.getFullYear();
+                
+                if (!annualData[year]) {
+                    annualData[year] = {
+                        values: []
+                    };
+                }
+                
+                annualData[year].values.push(history[i].value);
+            }
+            
+            // Calcola i rendimenti annuali
+            const labels = [];
+            const returns = [];
+            
+            const years = Object.keys(annualData).sort();
+            for (let i = 0; i < years.length; i++) {
+                const year = years[i];
+                const values = annualData[year].values;
+                
+                if (values.length > 1) {
+                    const firstValue = values[0];
+                    const lastValue = values[values.length - 1];
+                    const yearReturn = ((lastValue / firstValue) - 1) * 100;
+                    
+                    labels.push(year);
+                    returns.push(yearReturn);
+                }
+            }
+            
+            // Se esiste già un grafico, lo distrugge
+            if (window.annualReturnsChart instanceof Chart) {
+                window.annualReturnsChart.destroy();
+            }
+            
+            // Crea il nuovo grafico
+            const ctx = document.getElementById('annualReturnsChart').getContext('2d');
+            window.annualReturnsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Rendimento Annuale (%)',
+                        data: returns,
+                        backgroundColor: returns.map(value => value >= 0 ? 'rgba(46, 204, 113, 0.6)' : 'rgba(231, 76, 60, 0.6)'),
+                        borderColor: returns.map(value => value >= 0 ? 'rgb(46, 204, 113)' : 'rgb(231, 76, 60)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Rendimento: ' + context.raw.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Mostra messaggio di stato
+        function showStatus(message) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 5000);
+        }
+        
+        // Cambia tab
+        function switchTab(tabId) {
+            // Attiva il tab selezionato
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Mostra il contenuto del tab selezionato
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(tabId).style.display = 'block';
+            
+            // Se il tab è performance, aggiorna le metriche e i grafici
+            if (tabId === 'performance') {
+                calculatePerformanceMetrics();
+                updatePerformanceCharts();
+            }
+        }
+        
+        // Cambia tab di performance
+        function switchPerformanceTab(tabId) {
+            // Attiva il tab selezionato
+            document.querySelectorAll('.performance-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.performance-tab[data-performance-tab="${tabId}"]`).classList.add('active');
+            
+            // Mostra il contenuto del tab selezionato
+            document.querySelectorAll('.performance-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabId}-chart`).classList.add('active');
+        }
+        
+        // Reset dei dati
+        function resetData(withConfirmation = true) {
+            if (withConfirmation && !confirm('Questa azione cancellerà tutti i dati salvati. L\'operazione non può essere annullata. Sei sicuro di voler procedere?')) {
+                return;
+            }
+            
+            localStorage.removeItem('etfTrackerData');
+            
+            etfs = [];
+            transactions = [];
+            portfolioHistory = [];
+            performanceSettings = {
+                riskFreeRate: 2.0,
+                benchmarkReturn: 7.0
+            };
+            
+            // Aggiorna i campi delle impostazioni di performance
+            document.getElementById('riskFreeRate').value = performanceSettings.riskFreeRate;
+            document.getElementById('benchmarkReturn').value = performanceSettings.benchmarkReturn;
+            
+            refreshApplication();
+            
+            if (withConfirmation) {
+                showStatus('Tutti i dati sono stati cancellati.');
+            }
+        }
+        
+        // Aggiorna tutte le visualizzazioni
+        function refreshApplication() {
+            calculatePortfolio();
+            updateTransactionsTable();
+            updateLastRecordedValue();
+        }
+        
+        // Inizializza
+        function initializeApp() {
+            // Carica dati
+            loadData();
+            
+            // Pulsante per aggiornare tutti i prezzi
+            document.getElementById('updateAllPrices').addEventListener('click', updateAllRealPrices);
+            
+            // Imposta data odierna per nuove transazioni
+            document.getElementById('transactionDate').valueAsDate = new Date();
+            
+            // Tab navigation
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+            
+            // Performance tab navigation
+            document.querySelectorAll('.performance-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchPerformanceTab(this.dataset.performanceTab);
+                });
+            });
+            
+            // Time period selector
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    calculatePerformanceMetrics();
+                    updatePerformanceCharts();
+                });
+            });
+            
+            // Record portfolio value
+            document.getElementById('recordPortfolioValue').addEventListener('click', recordPortfolioValue);
+            
+            // Generate sample history
+            document.getElementById('generateSampleHistory').addEventListener('click', generateSampleHistory);
+            
+            // Performance settings form
+            document.getElementById('performanceSettingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                performanceSettings.riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value) || 2.0;
+                performanceSettings.benchmarkReturn = parseFloat(document.getElementById('benchmarkReturn').value) || 7.0;
+                
+                saveData();
+                calculatePerformanceMetrics();
+                
+                showStatus('Impostazioni di performance aggiornate.');
+            });
+            
+            // Form aggiungi ETF
+            document.getElementById('addEtfForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('etfName').value.trim();
+                const ticker = document.getElementById('etfTicker').value.trim();
+                const price = parseFloat(document.getElementById('etfInitialPrice').value);
+                
+                if (!name || !ticker || isNaN(price) || price <= 0) {
+                    showStatus('Compila tutti i campi correttamente.');
+                    return;
+                }
+                
+                // Crea nuovo ETF
+                const newEtf = {
+                    id: Date.now().toString(),
+                    name,
+                    ticker,
+                    currentPrice: price,
+                    lastUpdate: new Date().toISOString(),
+                    shares: 0,
+                    totalCost: 0,
+                    averagePrice: 0,
+                    value: 0,
+                    gainLoss: 0
+                };
+                
+                etfs.push(newEtf);
+                saveData();
+                
+                // Pulisci form
+                document.getElementById('etfName').value = '';
+                document.getElementById('etfTicker').value = '';
+                document.getElementById('etfInitialPrice').value = '';
+                
+                // Aggiorna
+                refreshApplication();
+                
+                // Vai alla tab principale
+                switchTab('main');
+                
+                showStatus(`ETF ${name} aggiunto con successo!`);
+            });
+            
+            // Form aggiungi transazione
+            document.getElementById('addTransactionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const etfId = document.getElementById('transactionEtf').value;
+                const type = document.getElementById('transactionType').value;
+                const date = document.getElementById('transactionDate').value;
+                const shares = parseFloat(document.getElementById('transactionShares').value);
+                const price = parseFloat(document.getElementById('transactionPrice').value);
+                
+                if (!etfId || !date || isNaN(shares) || isNaN(price)) {
+                    showStatus('Compila tutti i campi correttamente.');
+                    return;
+                }
+                
+                // Valida vendita
+                if (type === 'sell') {
+                    // Calcola quote possedute
+                    const holdings = transactions
+                        .filter(t => t.etfId === etfId)
+                        .reduce((total, t) => {
+                            return t.type === 'buy' ? total + t.shares : total - t.shares;
+                        }, 0);
+                    
+                    if (shares > holdings) {
+                        showStatus(`Non puoi vendere più di quanto possiedi (${holdings.toFixed(4)} quote)`);
+                        return;
+                    }
+                }
+                
+                // Aggiungi transazione
+                const newTransaction = {
+                    id: Date.now().toString(),
+                    etfId,
+                    type,
+                    date,
+                    shares,
+                    price
+                };
+                
+                transactions.push(newTransaction);
+                saveData();
+                
+                // Pulisci form tranne ETF e tipo
+                document.getElementById('transactionShares').value = '';
+                document.getElementById('transactionPrice').value = '';
+                
+                // Aggiorna
+                refreshApplication();
+                
+                // Vai alla tab principale
+                switchTab('main');
+                
+                showStatus('Transazione aggiunta con successo!');
+                
+                // Se non ci sono ancora valori di portafoglio registrati, suggeriamo di farlo
+                if (portfolioHistory.length === 0) {
+                    setTimeout(() => {
+                        showStatus('Consiglio: registra il valore attuale del portafoglio nella scheda Impostazioni per abilitare le metriche di performance.');
+                    }, 3000);
+                }
+            });
+            
+            // Esporta dati
+            document.getElementById('exportData').addEventListener('click', function() {
+                const dataStr = JSON.stringify({
+                    etfs: etfs,
+                    transactions: transactions,
+                    portfolioHistory: portfolioHistory,
+                    performanceSettings: performanceSettings
+                });
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = 'etf_tracker_' + new Date().toISOString().split('T')[0] + '.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showStatus('Dati esportati con successo!');
+            });
+            
+            // Importa dati
+            document.getElementById('importData').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (confirm('Questa azione sovrascriverà i dati esistenti. Vuoi procedere?')) {
+                            etfs = importedData.etfs || [];
+                            transactions = importedData.transactions || [];
+                            portfolioHistory = importedData.portfolioHistory || [];
+                            performanceSettings = importedData.performanceSettings || {
+                                riskFreeRate: 2.0,
+                                benchmarkReturn: 7.0
+                            };
+                            
+                            // Aggiorna i campi delle impostazioni di performance
+                            document.getElementById('riskFreeRate').value = performanceSettings.riskFreeRate;
+                            document.getElementById('benchmarkReturn').value = performanceSettings.benchmarkReturn;
+                            
+                            saveData();
+                            refreshApplication();
+                            
+                            showStatus('Dati importati con successo!');
+                        }
+                    } catch (error) {
+                        alert('Errore nel file importato. Assicurati che sia un file JSON valido.');
+                        showStatus('Errore nell\'importazione dei dati.');
+                    }
+                    
+                    // Reset input file
+                    document.getElementById('importData').value = '';
+                };
+                reader.readAsText(file);
+            });
+            
+            // Reset dati
+            document.getElementById('resetData').addEventListener('click', function() {
+                resetData();
+            });
+            
+            // Aggiorna all'avvio
+            refreshApplication();
+        }
+        
+        // Avvia quando il DOM è pronto
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
